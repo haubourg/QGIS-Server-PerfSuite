@@ -70,6 +70,8 @@ crs = QgsCoordinateReferenceSystem("EPSG:2154")
 # ms.setExtent( QgsRectangle(-4.7785446167610397,48.2772163121766340,-4.5545540303610084,48.4047377555436498) )
 
 ms.setExtent( extent )
+ms.setOutputSize( size )
+
 
 
 # QGIS 2 specific
