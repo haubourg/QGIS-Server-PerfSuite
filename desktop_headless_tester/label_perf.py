@@ -22,7 +22,7 @@ if version < 3 :
                            QgsPalLayerSettings
                            )
 
-    from PyQt4.QtCore import QSize
+    from PyQt4.QtCore import QSize, Qt
     from PyQt4.QtGui import QApplication, QImage, QPainter, QColor
 
 if version >= 3 :
@@ -37,7 +37,9 @@ if version >= 3 :
                            QgsPalLayerSettings,
                            QgsCoordinateReferenceSystem)
 
-    from PyQt5.QtCore import QSize
+    from qgis.gui import QgsMapCanvas
+
+    from PyQt5.QtCore import QSize, Qt
     from PyQt5.QtGui import QImage, QPainter, QColor
 
     from PyQt5.QtWidgets import QApplication
@@ -65,17 +67,27 @@ extent = vl.extent()
 size = QSize(1629, 800)
 ms = QgsMapSettings()
 crs = QgsCoordinateReferenceSystem("EPSG:2154")
-QgsProject.instance().setCrs(crs)
 # ms.setExtent( QgsRectangle(-4.7785446167610397,48.2772163121766340,-4.5545540303610084,48.4047377555436498) )
 
 ms.setExtent( extent )
 
 
 # QGIS 2 specific
-# QgsMapLayerRegistry.instance().addMapLayer(vl, False)
+
+if version < 3 :
+
+    QgsMapLayerRegistry.instance().addMapLayer(vl, False)
 
 # QGIS 3 specific
-QgsProject.instance().addMapLayer(vl, False)
+
+if version >= 3 :
+
+ # init a canvas object
+    canvas = QgsMapCanvas()
+    canvas.setLayers([vl])
+    print(canvas.layers())
+    canvas.setDestinationCrs(crs)
+
 
 # activate labeling
 vl.setCustomProperty("labeling", "pal")
@@ -94,6 +106,7 @@ vl.setCustomProperty("labeling/placementFlags", "14")
 
 ms.setLayers([vl])
 i0 = QImage(size, QImage.Format_RGB32)
+i0.fill( Qt.white )
 p0 = QPainter(i0)
 j0 = QgsMapRendererCustomPainterJob(ms, p0)
 
@@ -102,7 +115,6 @@ j0.renderSynchronously()
 t0 = time.time() - start
 
 p0.end()
-i0.save('/tmp/para.png')
 
 # horizontal
 place = QgsPalLayerSettings.Horizontal
@@ -111,6 +123,7 @@ vl.setCustomProperty("labeling/placementFlags", "14")
 
 ms.setLayers([vl])
 i1 = QImage(size, QImage.Format_RGB32)
+i1.fill(Qt.white)
 p1 = QPainter(i1)
 j1 = QgsMapRendererCustomPainterJob(ms, p1)
 
