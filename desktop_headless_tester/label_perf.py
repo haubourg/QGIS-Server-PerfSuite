@@ -48,18 +48,21 @@ else :
     print('unsupported version. Exiting perf testing')
     exit()
 
-prefix = "/usr/bin"
+prefix = "/home/regis/APPS/QGIS3/qgis3_release/bin"
 app = QApplication([])
 QgsApplication.setPrefixPath(prefix, True)
 QgsApplication.initQgis()
 
 
-
-
 # init vector layer
-vl = QgsVectorLayer("dbname='/data/REFS/opendata/roads_osm.gpkg' table=\"roads_osm\" (geometry) sql=", "roads_osm", "gpkg")
+vl = QgsVectorLayer('/data/REFS/opendata/roads_osm.gpkg|roads_osm', 'roads_osm2', 'ogr')
 
+if not vl :
+    print('Error adding vector layer')
 
+print( str(vl.name() ) )
+project = QgsProject.instance()
+project.addMapLayers([vl])
 
 extent = vl.extent()
 
@@ -86,31 +89,36 @@ if version >= 3 :
 
  # init a canvas object
     canvas = QgsMapCanvas()
+    canvas.setDestinationCrs(crs)
     canvas.setLayers([vl])
     print(canvas.layers())
-    canvas.setDestinationCrs(crs)
+    canvas.refresh()
+
+
 
 
 # activate labeling
-vl.setCustomProperty("labeling", "pal")
-vl.setCustomProperty("labeling/enabled", "true")
-vl.setCustomProperty("labeling/drawLabels", "true")
-vl.setCustomProperty("labeling/fontFamily", "Arial")
-vl.setCustomProperty("labeling/fontSize", "10")
-vl.setCustomProperty("labeling/fieldName", "'name'")
-vl.setCustomProperty("labeling/isExpression", "true")
+
+# vl.setCustomProperty("labeling", "pal")
+# vl.setCustomProperty("labeling/enabled", "true")
+# vl.setCustomProperty("labeling/drawLabels", "true")
+# vl.setCustomProperty("labeling/fontFamily", "Arial")
+# vl.setCustomProperty("labeling/fontSize", "10")
+# vl.setCustomProperty("labeling/fieldName", "'name'")
+# vl.setCustomProperty("labeling/isExpression", "true")
 
 
 # parallel
-place = QgsPalLayerSettings.Line
-vl.setCustomProperty("labeling/placement", str(place))
-vl.setCustomProperty("labeling/placementFlags", "14")
+# place = QgsPalLayerSettings.Line
+# vl.setCustomProperty("labeling/placement", str(place))
+# vl.setCustomProperty("labeling/placementFlags", "14")
 
-ms.setLayers([vl])
+# ms.setLayers([vl])
 i0 = QImage(size, QImage.Format_RGB32)
 i0.fill( Qt.white )
 p0 = QPainter(i0)
 j0 = QgsMapRendererCustomPainterJob(ms, p0)
+
 
 start = time.time()
 j0.renderSynchronously()
@@ -119,16 +127,15 @@ t0 = time.time() - start
 p0.end()
 
 # horizontal
-place = QgsPalLayerSettings.Horizontal
-vl.setCustomProperty("labeling/placement", str(place))
-vl.setCustomProperty("labeling/placementFlags", "14")
+# place = QgsPalLayerSettings.Horizontal
+# vl.setCustomProperty("labeling/placement", str(place))
+# vl.setCustomProperty("labeling/placementFlags", "14")
 
 ms.setLayers([vl])
 i1 = QImage(size, QImage.Format_RGB32)
-i1.fill(Qt.white)
+# i1.fill(Qt.white)
 p1 = QPainter(i1)
 j1 = QgsMapRendererCustomPainterJob(ms, p1)
-
 start = time.time()
 j1.renderSynchronously()
 t1 = time.time() - start
