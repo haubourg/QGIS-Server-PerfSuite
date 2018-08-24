@@ -6,32 +6,46 @@
 import time
 import sys
 import future
+import os
 
 try:
     from qgis.core import Qgis
 except ImportError:
     from qgis.core import QGis as Qgis
 
-version = Qgis.QGIS_VERSION_INT
+prefix_qgis2 = "/home/regis/APPS/QGIS/ltr"
+prefix_qgis3 = "/home/regis/APPS/QGIS3/qgis3_release"
 
+version = int(Qgis.QGIS_VERSION_INT)
 
-if version < 3 :
-#QGIS2 specific imports
+print('Python PATH : ' + os.environ['PYTHONPATH'])
+print('LD Library PATH: ' + os.environ['LD_LIBRARY_PATH'])
+print('QGIS version tested : ' + str(version))
+
+if version < 30000 :
+    #QGIS2 specific imports
+    print("Imports for QGIS 2")
     from qgis.core import (QgsDataSourceURI,
                            QgsVectorLayer,
+                           QgsProject,
                            QgsMapLayerRegistry,
                            QgsApplication,
                            QgsMapSettings,
                            QgsRectangle,
                            QgsMapRendererCustomPainterJob,
-                           QgsPalLayerSettings
-                           )
+                           QgsPalLayerSettings,
+                           QgsCoordinateReferenceSystem)
+
+    from qgis.gui import QgsMapCanvas
+
 
     from PyQt4.QtCore import QSize, Qt
     from PyQt4.QtGui import QApplication, QImage, QPainter, QColor
+    prefix = prefix_qgis2
 
-if version >= 3 :
+elif version >= 30000 :
     #QGIS3 specific imports
+    print("Imports for QGIS 3")
     from qgis.core import (QgsDataSourceUri,
                            QgsVectorLayer,
                            QgsProject,
@@ -46,16 +60,18 @@ if version >= 3 :
 
     from PyQt5.QtCore import QSize, Qt
     from PyQt5.QtGui import QImage, QPainter, QColor
-
     from PyQt5.QtWidgets import QApplication
+    prefix = prefix_qgis3
 
-else :
-    print('unsupported version. Exiting perf testing')
+else:
+    print('Unsupported version. Exiting perf testing')
     exit()
 
-prefix = "/usr"
-# prefix = "/home/regis/APPS/QGIS3/qgis3_release/"
+
 app = QApplication([])
+
+print("Setting prefix to : " + prefix )
+
 QgsApplication.setPrefixPath(prefix, True)
 QgsApplication.initQgis()
 
@@ -68,49 +84,43 @@ if vl == False :
     print('Error adding vector layer')
 
 print( str(vl.name() ) )
-# n_feat = vl.featureCount()
-# print( str( n_feat ) )
-# Ex:
-#   export LD_LIBRARY_PATH=/home/regis/APPS/QGIS3/qgis3_release/lib
-#   export
-project = QgsProject.instance()
-project.addMapLayers([vl])
 
-print('Project Layers:')
-for l in project.mapLayers() :
-    print(l)
+ms = QgsMapSettings()
 
 extent = vl.extent()
+ms.setExtent( extent )
 
 # map settings
 size = QSize(1629, 800)
-ms = QgsMapSettings()
 
 crs = QgsCoordinateReferenceSystem("EPSG:2154")
-# ms.setExtent( QgsRectangle(-4.7785446167610397,48.2772163121766340,-4.5545540303610084,48.4047377555436498) )
-
-ms.setExtent( extent )
 ms.setOutputSize( size )
-
+ms.setDestinationCrs(crs)
 # QGIS 2 specific
 
-if version < 3 :
 
-    QgsMapLayerRegistry.instance().addMapLayer(vl, False)
+project = QgsProject.instance()
 
+# init a canvas object
+canvas = QgsMapCanvas()
+canvas.setDestinationCrs(crs)
+
+if version < 30000 :
+
+    QgsMapLayerRegistry.instance().addMapLayer(vl)
 
 # QGIS 3 specific
+if version >= 30000 :
+    project.addMapLayers([vl])
 
-if version >= 3 :
+    print('Project Layers:')
+    for l in project.mapLayers() :
+        print(l)
 
- # init a canvas object
-    canvas = QgsMapCanvas()
-    canvas.setDestinationCrs(crs)
     canvas.setLayers([vl])
-    # print(canvas.layers())
-    # canvas.show()
-    #canvas.refresh()
+    print(canvas.layers())
 
+    ms.setLayers([vl])
 
 
 # activate labeling
@@ -128,9 +138,7 @@ if version >= 3 :
 # place = QgsPalLayerSettings.Line
 # vl.setCustomProperty("labeling/placement", str(place))
 # vl.setCustomProperty("labeling/placementFlags", "14")
-ms.setLayers([vl])
 
-# ms.setLayers([vl])
 i0 = QImage(size, QImage.Format_RGB32)
 i0.fill( Qt.white )
 p0 = QPainter(i0)
@@ -139,8 +147,6 @@ j0 = QgsMapRendererCustomPainterJob(ms, p0)
 
 start = time.time()
 j0.renderSynchronously()# Ex:
-#   export LD_LIBRARY_PATH=/home/regis/APPS/QGIS3/qgis3_release/lib
-#   export
 t0 = time.time() - start
 
 p0.end()
@@ -149,7 +155,6 @@ i0.save('/tmp/para.png')
 # horizontal
 # place = QgsPalLayerSettings.Horizontal
 # vl.setCustomProperty("labeling/placement", str(place))
-
 # vl.setCustomProperty("labeling/placementFlags", "14")
 
 i1 = QImage(size, QImage.Format_RGB32)
