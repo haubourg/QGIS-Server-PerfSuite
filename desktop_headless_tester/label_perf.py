@@ -113,6 +113,8 @@ ms.setOutputSize( size )
 if version < 30000 :
 
     QgsMapLayerRegistry.instance().addMapLayer(vl)
+    ms.setLayers([vl.id()])
+
 
 # QGIS 3 specific
 if version >= 30000 :
