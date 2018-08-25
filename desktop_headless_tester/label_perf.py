@@ -83,8 +83,10 @@ QgsApplication.initQgis()
 
 
 # init vector layer
-vl = QgsVectorLayer('/data/REFS/opendata/roads_osm.gpkg|roads_osm', 'roads_osm2', 'ogr')
+vl = QgsVectorLayer('/data/REFS/opendata/roads_osm_2154.gpkg|roads_osm', 'roads_osm2', 'ogr')
 # vl = QgsVectorLayer('/home/regis/APPS/QGIS3/cpp/QGIS/tests/testdata/curved_polys.gpkg|layername=polys', 'curved_poly', 'ogr')
+
+vl.extent()
 
 if vl == False :
     print('Error adding vector layer')
@@ -94,40 +96,29 @@ print( str(vl.name() ) )
 # map settings
 project = QgsProject.instance()
 
+# crs = QgsCoordinateReferenceSystem("EPSG:2154")
+crs = vl.crs()
+print('layer crs is :' + crs.toWkt())
 ms = QgsMapSettings()
+ms.setDestinationCrs(crs)
+print('Map CrRS is : ' + ms.destinationCrs().toWkt())
 
 extent = vl.extent()
+print(extent)
 ms.setExtent( extent )
 size = QSize(1629, 800)
-crs = QgsCoordinateReferenceSystem("EPSG:2154")
 ms.setOutputSize( size )
-ms.setDestinationCrs(crs)
 
 # QGIS 2 specific
-
-
-
-# init a canvas object
-canvas = QgsMapCanvas()
-canvas.setDestinationCrs(crs)
-
 if version < 30000 :
 
     QgsMapLayerRegistry.instance().addMapLayer(vl)
 
 # QGIS 3 specific
 if version >= 30000 :
+
     project.addMapLayers([vl])
-
-    print('Project Layers:')
-    for l in project.mapLayers() :
-        print(l)
-
-    canvas.setLayers([vl])
-    print(canvas.layers())
-
     ms.setLayers([vl])
-
 
 # activate labeling
 
