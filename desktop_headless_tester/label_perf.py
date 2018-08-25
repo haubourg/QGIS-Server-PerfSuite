@@ -1,20 +1,76 @@
 # this scripts needs to be run with the following environment variable set correctly with the prefix location
-# Ex:
+# Ex. for QGIS native install:
+#   export PYTHON_PATH=
 #   export LD_LIBRARY_PATH=/home/regis/APPS/QGIS3/qgis3_release/lib
+#   export QGIS_PREFIX=/home/regis/APPS/QGIS/ltr/
+#
+# Ex.  for QGIS locally compiled
+#   export PYTHON_PATH=export PYTHONPATH=/home/regis/APPS/QGIS3/qgis3_release/share/qgis/python
 #   export LD_LIBRARY_PATH=/home/regis/APPS/QGIS3/qgis3_release/lib
+#   export QGIS_PREFIX=/home/regis/APPS/QGIS3/qgis3_release
+#
+
 
 import time
 import sys
 import future
 import os
 
+# conditional imports (ugly):
+
 try:
     from qgis.core import Qgis
 except ImportError:
     from qgis.core import QGis as Qgis
 
-prefix_qgis2 = "/home/regis/APPS/QGIS/ltr"
-prefix_qgis3 = "/usr"
+try:
+    from PyQt4.QtGui import QApplication, QImage, QPainter, QColor
+    from PyQt4.QtCore import QSize, Qt
+    from PyQt4.QtGui import QApplication, QImage, QPainter, QColor
+
+except ImportError:
+    from PyQt5.QtCore import QSize, Qt
+    from PyQt5.QtGui import QImage, QPainter, QColor
+    from PyQt5.QtWidgets import QApplication
+
+
+try:    #QGIS2 specific imports
+    print("Imports for QGIS 2")
+    from qgis.core import (QgsDataSourceURI,
+    QgsVectorLayer,
+    QgsProject,
+    QgsMapLayerRegistry,
+    QgsApplication,
+    QgsMapSettings,
+    QgsRectangle,
+    QgsMapRendererCustomPainterJob,
+    QgsPalLayerSettings,
+    QgsCoordinateReferenceSystem)
+
+    from qgis.gui import QgsMapCanvas
+
+except ImportError:
+    print("Imports for QGIS 3")
+    from qgis.core import (QgsDataSourceUri,
+    QgsVectorLayer,
+    QgsProject,
+    QgsApplication,
+    QgsMapSettings,
+    QgsRectangle,
+    QgsMapRendererCustomPainterJob,
+    QgsPalLayerSettings,
+    QgsCoordinateReferenceSystem)
+
+    from qgis.gui import QgsMapCanvas
+
+app = QApplication([])
+
+# prefix_qgis2 = "/home/regis/APPS/QGIS/ltr"
+# prefix_qgis3 = "/usr"
+prefix = os.environ['QGIS_PREFIX']
+print("Setting prefix to : " + prefix )
+QgsApplication.setPrefixPath(prefix, True)
+QgsApplication.initQgis()
 
 version = int(Qgis.QGIS_VERSION_INT)
 
@@ -27,64 +83,9 @@ except :
 print('LD Library PATH: ' + os.environ['LD_LIBRARY_PATH'])
 print('QGIS version tested : ' + str(version))
 
-if version < 30000 :
-    #QGIS2 specific imports
-    print("Imports for QGIS 2")
-    from qgis.core import (QgsDataSourceURI,
-                           QgsVectorLayer,
-                           QgsProject,
-                           QgsMapLayerRegistry,
-                           QgsApplication,
-                           QgsMapSettings,
-                           QgsRectangle,
-                           QgsMapRendererCustomPainterJob,
-                           QgsPalLayerSettings,
-                           QgsCoordinateReferenceSystem)
-
-    from qgis.gui import QgsMapCanvas
-
-
-    from PyQt4.QtCore import QSize, Qt
-    from PyQt4.QtGui import QApplication, QImage, QPainter, QColor
-    prefix = prefix_qgis2
-
-elif version >= 30000 :
-    #QGIS3 specific imports
-    print("Imports for QGIS 3")
-    from qgis.core import (QgsDataSourceUri,
-                           QgsVectorLayer,
-                           QgsProject,
-                           QgsApplication,
-                           QgsMapSettings,
-                           QgsRectangle,
-                           QgsMapRendererCustomPainterJob,
-                           QgsPalLayerSettings,
-                           QgsCoordinateReferenceSystem)
-
-    from qgis.gui import QgsMapCanvas
-
-    from PyQt5.QtCore import QSize, Qt
-    from PyQt5.QtGui import QImage, QPainter, QColor
-    from PyQt5.QtWidgets import QApplication
-    prefix = prefix_qgis3
-
-else:
-    print('Unsupported version. Exiting perf testing')
-    exit()
-
-
-
-app = QApplication([])
-
-print("Setting prefix to : " + prefix )
-
-QgsApplication.setPrefixPath(prefix, True)
-QgsApplication.initQgis()
-
 
 # init vector layer
 vl = QgsVectorLayer('/data/REFS/opendata/roads_osm_2154.gpkg|roads_osm', 'roads_osm2', 'ogr')
-# vl = QgsVectorLayer('/home/regis/APPS/QGIS3/cpp/QGIS/tests/testdata/curved_polys.gpkg|layername=polys', 'curved_poly', 'ogr')
 
 vl.extent()
 
