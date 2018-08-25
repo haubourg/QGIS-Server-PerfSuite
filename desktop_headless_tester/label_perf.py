@@ -14,11 +14,16 @@ except ImportError:
     from qgis.core import QGis as Qgis
 
 prefix_qgis2 = "/home/regis/APPS/QGIS/ltr"
-prefix_qgis3 = "/home/regis/APPS/QGIS3/qgis3_release"
+prefix_qgis3 = "/usr"
 
 version = int(Qgis.QGIS_VERSION_INT)
 
-print('Python PATH : ' + os.environ['PYTHONPATH'])
+try :
+    pythonpath = os.environ['PYTHONPATH']
+    print('Python PATH : ' + pythonpath)
+except :
+    print('Python PATH not set')
+
 print('LD Library PATH: ' + os.environ['LD_LIBRARY_PATH'])
 print('QGIS version tested : ' + str(version))
 
@@ -68,6 +73,7 @@ else:
     exit()
 
 
+
 app = QApplication([])
 
 print("Setting prefix to : " + prefix )
@@ -85,21 +91,21 @@ if vl == False :
 
 print( str(vl.name() ) )
 
+# map settings
+project = QgsProject.instance()
+
 ms = QgsMapSettings()
 
 extent = vl.extent()
 ms.setExtent( extent )
-
-# map settings
 size = QSize(1629, 800)
-
 crs = QgsCoordinateReferenceSystem("EPSG:2154")
 ms.setOutputSize( size )
 ms.setDestinationCrs(crs)
+
 # QGIS 2 specific
 
 
-project = QgsProject.instance()
 
 # init a canvas object
 canvas = QgsMapCanvas()
@@ -146,7 +152,7 @@ j0 = QgsMapRendererCustomPainterJob(ms, p0)
 
 
 start = time.time()
-j0.renderSynchronously()# Ex:
+j0.renderSynchronously()
 t0 = time.time() - start
 
 p0.end()
@@ -173,4 +179,8 @@ i1.save('/tmp/hori.png')
 print(str('PERF_PARA: ') + str(t0))
 print(str('PERF_HORI: ') + str(t1))
 print(str('PERF_RATIO: ') + str(t0/t1))
-# app.exit()
+
+QgsApplication.exitQgis()
+app.exit()
+
+print('------Script end-------')
