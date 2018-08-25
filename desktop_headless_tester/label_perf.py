@@ -104,7 +104,7 @@ ms.setDestinationCrs(crs)
 print('Map CrRS is : ' + ms.destinationCrs().toWkt())
 
 extent = vl.extent()
-print(extent)
+print('Extent : ' + extent.asWktCoordinates())
 ms.setExtent( extent )
 size = QSize(1629, 800)
 ms.setOutputSize( size )
