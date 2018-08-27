@@ -30,7 +30,7 @@ try:
 
 except ImportError:
     from PyQt5.QtCore import QSize, Qt
-    from PyQt5.QtGui import QImage, QPainter, QColor
+    from PyQt5.QtGui import QImage, QPainter, QColor, QFont
     from PyQt5.QtWidgets import QApplication
 
 
@@ -59,7 +59,11 @@ except ImportError:
     QgsRectangle,
     QgsMapRendererCustomPainterJob,
     QgsPalLayerSettings,
-    QgsCoordinateReferenceSystem)
+    QgsCoordinateReferenceSystem,
+    QgsVectorLayerSimpleLabeling,
+    QgsTextFormat,
+    QgsTextFormat
+    )
 
     from qgis.gui import QgsMapCanvas
 
@@ -104,7 +108,9 @@ ms = QgsMapSettings()
 ms.setDestinationCrs(crs)
 print('Map CrRS is : ' + ms.destinationCrs().toWkt())
 
-extent = vl.extent()
+# extent = vl.extent()
+# extent = QgsRectangle(566367,6274983,570666,6275801)
+extent = QgsRectangle(562667.4,6271312.2,567893.2,6272975.6)
 print('Extent : ' + extent.asWktCoordinates())
 ms.setExtent( extent )
 size = QSize(1629, 800)
@@ -123,21 +129,53 @@ if version >= 30000 :
     project.addMapLayers([vl])
     ms.setLayers([vl])
 
+# set labeling engine options > TODO
+    # if version < 30000 :
+    #     pal= QgsPalLabeling()
+    #     pal.setNumCandidatePositions(8, 8, 20)
+    #     ms.setLabelingEngineSettings(pal)
+    # else :
+    #     palsettings = QgsLabelingEngineSettings()
+    #     palsettings.setNumCandidatePositions(8,8,20)
+    #     ms.setLabelingEngineSettings(palsettings)
+
 # activate labeling
 
-# vl.setCustomProperty("labeling", "pal")
-# vl.setCustomProperty("labeling/enabled", "true")
-# vl.setCustomProperty("labeling/drawLabels", "true")
-# vl.setCustomProperty("labeling/fontFamily", "Arial")
-# vl.setCustomProperty("labeling/fontSize", "10")
-# vl.setCustomProperty("labeling/fieldName", "'name'")
-# vl.setCustomProperty("labeling/isExpression", "true")
+labelingsettings = QgsPalLayerSettings()
 
+if version < 30000 :
 
-# parallel
-# place = QgsPalLayerSettings.Line
-# vl.setCustomProperty("labeling/placement", str(place))
-# vl.setCustomProperty("labeling/placementFlags", "14")
+    vl.setCustomProperty("labeling", "pal")
+    vl.setCustomProperty("labeling/enabled", "true")
+    vl.setCustomProperty("labeling/drawLabels", "true")
+    vl.setCustomProperty("labeling/fontFamily", "Arial")
+    vl.setCustomProperty("labeling/fontSize", "10")
+    vl.setCustomProperty("labeling/fieldName", "name")
+    vl.setCustomProperty("labeling/isExpression", "true")
+
+    # parallel labeling
+    place = labelingsettings.Line
+    vl.setCustomProperty("labeling/placement", str(place))
+    vl.setCustomProperty("labeling/placementFlags", "14")
+
+    print ('Label enabled : ' + str(vl.labelsEnabled()))
+
+if version >= 30000 :
+    text_format = QgsTextFormat()
+    text_format.setFont(QFont("Arial", 12))
+    text_format.setSize(10)
+    labelingsettings.setFormat(text_format)
+    labelingsettings.fieldName = 'name'
+    place = labelingsettings.Line
+    labelingsettings.LinePlacementFlags = place
+    # labelingsettings.enabled = True
+    labelingsettings.drawLabels = True
+    labelingsettings = QgsVectorLayerSimpleLabeling(labelingsettings)
+    vl.setLabeling(labelingsettings)
+    vl.setLabelsEnabled(True)
+
+    print ('Label enabled : ' + str(vl.labelsEnabled()))
+
 
 i0 = QImage(size, QImage.Format_RGB32)
 i0.fill( Qt.white )
@@ -152,27 +190,30 @@ t0 = time.time() - start
 p0.end()
 i0.save('/tmp/para.png')
 
-# horizontal
-# place = QgsPalLayerSettings.Horizontal
+
+#
+#
+# # horizontal labeling
+# place = labelingsettings.Horizontal
 # vl.setCustomProperty("labeling/placement", str(place))
 # vl.setCustomProperty("labeling/placementFlags", "14")
-
-i1 = QImage(size, QImage.Format_RGB32)
-i1.fill(Qt.white)
-p1 = QPainter(i1)
-j1 = QgsMapRendererCustomPainterJob(ms, p1)
-start = time.time()
-
-
-j1.renderSynchronously()
-t1 = time.time() - start
-
-p1.end()
-i1.save('/tmp/hori.png')
+#
+# i1 = QImage(size, QImage.Format_RGB32)
+# i1.fill(Qt.white)
+# p1 = QPainter(i1)
+# j1 = QgsMapRendererCustomPainterJob(ms, p1)
+# start = time.time()
+#
+#
+# j1.renderSynchronously()
+# t1 = time.time() - start
+#
+# p1.end()
+# i1.save('/tmp/hori.png')
 
 print(str('PERF_PARA: ') + str(t0))
-print(str('PERF_HORI: ') + str(t1))
-print(str('PERF_RATIO: ') + str(t0/t1))
+# print(str('PERF_HORI: ') + str(t1))
+# print(str('PERF_RATIO: ') + str(t0/t1))
 
 QgsApplication.exitQgis()
 app.exit()
